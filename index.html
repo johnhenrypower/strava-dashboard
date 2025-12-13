@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Training Dashboard | John Power</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="bg-gradient"></div>
+    <div class="grid-overlay"></div>
+
+    <nav>
+        <a href="https://johnhpower.com" class="logo">JHP</a>
+        <div class="nav-right">
+            <span class="nav-title">Training Dashboard</span>
+            <button id="sync-btn" class="btn btn-secondary btn-small" style="display: none;">
+                <svg class="sync-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+                </svg>
+                Sync
+            </button>
+        </div>
+    </nav>
+
+    <main>
+        <!-- Auth Section (shown when not connected) -->
+        <section id="auth-section" class="auth-section">
+            <div class="auth-content">
+                <div class="strava-logo">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169"/>
+                    </svg>
+                </div>
+                <h1>Connect to Strava</h1>
+                <p>View your recent activities, weekly stats, and training progress.</p>
+                <button id="connect-btn" class="btn btn-strava">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                        <path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169"/>
+                    </svg>
+                    Connect with Strava
+                </button>
+            </div>
+        </section>
+
+        <!-- Dashboard Section (shown when connected) -->
+        <section id="dashboard-section" class="dashboard-section" style="display: none;">
+            <!-- Athlete Header -->
+            <div class="athlete-header">
+                <img id="athlete-avatar" class="athlete-avatar" src="" alt="Athlete">
+                <div class="athlete-info">
+                    <h2 id="athlete-name">Loading...</h2>
+                    <p id="athlete-location" class="athlete-location"></p>
+                </div>
+                <button id="disconnect-btn" class="btn btn-ghost">Disconnect</button>
+            </div>
+
+            <!-- Weekly Summary -->
+            <div class="section-header">
+                <h3>This Week</h3>
+                <span id="week-range" class="week-range"></span>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-distance">--</div>
+                    <div class="stat-label">Miles</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-time">--</div>
+                    <div class="stat-label">Time</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-pace">--</div>
+                    <div class="stat-label">Avg Pace</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-activities">--</div>
+                    <div class="stat-label">Activities</div>
+                </div>
+            </div>
+
+            <!-- Recent Activities -->
+            <div class="section-header">
+                <h3>Recent Activities</h3>
+            </div>
+            <div id="activities-list" class="activities-list">
+                <div class="loading-placeholder">
+                    <div class="spinner"></div>
+                    <p>Loading activities...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Loading State -->
+        <section id="loading-section" class="loading-section" style="display: none;">
+            <div class="spinner large"></div>
+            <p>Connecting to Strava...</p>
+        </section>
+
+        <!-- Error State -->
+        <section id="error-section" class="error-section" style="display: none;">
+            <div class="error-content">
+                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+                <h2>Something went wrong</h2>
+                <p id="error-message">Unable to connect to Strava.</p>
+                <button id="retry-btn" class="btn btn-primary">Try Again</button>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>Powered by <a href="https://strava.com" target="_blank">Strava</a> API</p>
+    </footer>
+
+    <script src="js/strava.js"></script>
+    <script src="js/dashboard.js"></script>
+</body>
+</html>
