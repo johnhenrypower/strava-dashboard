@@ -1,28 +1,24 @@
 /**
- * Cloudflare Worker for Strava OAuth
+ * Cloudflare Worker for Strava Dashboard
  *
- * This worker handles the secure token exchange with Strava,
- * keeping your CLIENT_SECRET safe on the server side.
- *
- * SETUP INSTRUCTIONS:
- * 1. Create a new Cloudflare Worker at https://workers.cloudflare.com
- * 2. Copy this code into the worker
- * 3. Add these secrets in the Worker settings:
- *    - STRAVA_CLIENT_ID: Your Strava API Client ID
- *    - STRAVA_CLIENT_SECRET: Your Strava API Client Secret
- * 4. Deploy the worker
- * 5. Update the workerUrl in strava.js with your worker URL
+ * Public API that serves your Strava data to the dashboard.
+ * Uses stored refresh token to authenticate with Strava.
  */
 
 const STRAVA_TOKEN_URL = 'https://www.strava.com/oauth/token';
+const STRAVA_API_BASE = 'https://www.strava.com/api/v3';
 
-// CORS headers for cross-origin requests
+// CORS headers
 const corsHeaders = {
-    'Access-Control-Allow-Origin': '*', // In production, replace with your domain
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Access-Control-Max-Age': '86400',
 };
+
+// In-memory token cache (per worker instance)
+let cachedToken = null;
+let tokenExpiry = 0;
 
 /**
  * Handle incoming requests
@@ -38,13 +34,19 @@ export default {
         const path = url.pathname;
 
         try {
-            // Route requests
-            if (path === '/auth/callback' && request.method === 'POST') {
-                return await handleCallback(request, env);
+            // Public API endpoints
+            if (path === '/api/athlete') {
+                return await handleGetAthlete(env);
             }
 
-            if (path === '/auth/refresh' && request.method === 'POST') {
-                return await handleRefresh(request, env);
+            if (path === '/api/activities') {
+                const page = url.searchParams.get('page') || '1';
+                const perPage = url.searchParams.get('per_page') || '30';
+                return await handleGetActivities(env, page, perPage);
+            }
+
+            if (path === '/api/stats') {
+                return await handleGetStats(env);
             }
 
             // Health check
@@ -61,15 +63,17 @@ export default {
 };
 
 /**
- * Handle OAuth callback - exchange authorization code for tokens
+ * Get a valid access token using the stored refresh token
  */
-async function handleCallback(request, env) {
-    const { code } = await request.json();
+async function getAccessToken(env) {
+    const now = Math.floor(Date.now() / 1000);
 
-    if (!code) {
-        return jsonResponse({ error: 'Authorization code is required' }, 400);
+    // Return cached token if still valid (with 5 min buffer)
+    if (cachedToken && tokenExpiry > now + 300) {
+        return cachedToken;
     }
 
+    // Refresh the token
     const response = await fetch(STRAVA_TOKEN_URL, {
         method: 'POST',
         headers: {
@@ -78,67 +82,68 @@ async function handleCallback(request, env) {
         body: JSON.stringify({
             client_id: env.STRAVA_CLIENT_ID,
             client_secret: env.STRAVA_CLIENT_SECRET,
-            code: code,
-            grant_type: 'authorization_code'
-        })
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-        return jsonResponse({
-            error: data.message || 'Failed to exchange authorization code',
-            details: data
-        }, response.status);
-    }
-
-    // Return tokens and athlete info
-    return jsonResponse({
-        access_token: data.access_token,
-        refresh_token: data.refresh_token,
-        expires_at: data.expires_at,
-        athlete: data.athlete
-    });
-}
-
-/**
- * Handle token refresh
- */
-async function handleRefresh(request, env) {
-    const { refresh_token } = await request.json();
-
-    if (!refresh_token) {
-        return jsonResponse({ error: 'Refresh token is required' }, 400);
-    }
-
-    const response = await fetch(STRAVA_TOKEN_URL, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-            client_id: env.STRAVA_CLIENT_ID,
-            client_secret: env.STRAVA_CLIENT_SECRET,
-            refresh_token: refresh_token,
+            refresh_token: env.STRAVA_REFRESH_TOKEN,
             grant_type: 'refresh_token'
         })
     });
 
-    const data = await response.json();
-
     if (!response.ok) {
-        return jsonResponse({
-            error: data.message || 'Failed to refresh token',
-            details: data
-        }, response.status);
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to refresh token');
     }
 
-    // Return new tokens
-    return jsonResponse({
-        access_token: data.access_token,
-        refresh_token: data.refresh_token,
-        expires_at: data.expires_at
+    const data = await response.json();
+
+    // Cache the new token
+    cachedToken = data.access_token;
+    tokenExpiry = data.expires_at;
+
+    return cachedToken;
+}
+
+/**
+ * Make an authenticated request to Strava API
+ */
+async function stravaRequest(env, endpoint) {
+    const accessToken = await getAccessToken(env);
+
+    const response = await fetch(`${STRAVA_API_BASE}${endpoint}`, {
+        headers: {
+            'Authorization': `Bearer ${accessToken}`
+        }
     });
+
+    if (!response.ok) {
+        throw new Error(`Strava API error: ${response.status}`);
+    }
+
+    return response.json();
+}
+
+/**
+ * Get athlete info
+ */
+async function handleGetAthlete(env) {
+    const athlete = await stravaRequest(env, '/athlete');
+    return jsonResponse(athlete);
+}
+
+/**
+ * Get activities
+ */
+async function handleGetActivities(env, page, perPage) {
+    const activities = await stravaRequest(env, `/athlete/activities?page=${page}&per_page=${perPage}`);
+    return jsonResponse(activities);
+}
+
+/**
+ * Get athlete stats
+ */
+async function handleGetStats(env) {
+    // First get athlete ID
+    const athlete = await stravaRequest(env, '/athlete');
+    const stats = await stravaRequest(env, `/athletes/${athlete.id}/stats`);
+    return jsonResponse(stats);
 }
 
 /**

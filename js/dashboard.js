@@ -1,9 +1,11 @@
 /**
- * Dashboard Controller
- * Handles UI rendering and user interactions
+ * Public Strava Dashboard
+ * Fetches and displays activities from the API
  */
 
 const Dashboard = (function() {
+    const API_URL = 'https://strava-auth.johnhenry-pwr.workers.dev';
+
     // Activity type icons
     const ACTIVITY_ICONS = {
         'Run': '\u{1F3C3}',
@@ -30,28 +32,7 @@ const Dashboard = (function() {
     async function init() {
         cacheElements();
         bindEvents();
-
-        // Check for OAuth callback
-        const urlParams = new URLSearchParams(window.location.search);
-        const code = urlParams.get('code');
-        const error = urlParams.get('error');
-
-        if (error) {
-            showError('Authorization was denied or failed.');
-            return;
-        }
-
-        if (code) {
-            await handleOAuthCallback(code);
-            return;
-        }
-
-        // Check if already authenticated
-        if (StravaAPI.isAuthenticated()) {
-            await loadDashboard();
-        } else {
-            showAuthSection();
-        }
+        await loadDashboard();
     }
 
     /**
@@ -59,13 +40,8 @@ const Dashboard = (function() {
      */
     function cacheElements() {
         elements = {
-            authSection: document.getElementById('auth-section'),
             dashboardSection: document.getElementById('dashboard-section'),
-            loadingSection: document.getElementById('loading-section'),
             errorSection: document.getElementById('error-section'),
-            connectBtn: document.getElementById('connect-btn'),
-            disconnectBtn: document.getElementById('disconnect-btn'),
-            syncBtn: document.getElementById('sync-btn'),
             retryBtn: document.getElementById('retry-btn'),
             athleteAvatar: document.getElementById('athlete-avatar'),
             athleteName: document.getElementById('athlete-name'),
@@ -84,126 +60,45 @@ const Dashboard = (function() {
      * Bind event listeners
      */
     function bindEvents() {
-        elements.connectBtn?.addEventListener('click', handleConnect);
-        elements.disconnectBtn?.addEventListener('click', handleDisconnect);
-        elements.syncBtn?.addEventListener('click', handleSync);
-        elements.retryBtn?.addEventListener('click', handleRetry);
-    }
-
-    /**
-     * Show auth section
-     */
-    function showAuthSection() {
-        hideAllSections();
-        elements.authSection.style.display = 'flex';
-    }
-
-    /**
-     * Show dashboard section
-     */
-    function showDashboard() {
-        hideAllSections();
-        elements.dashboardSection.style.display = 'block';
-        elements.syncBtn.style.display = 'inline-flex';
-    }
-
-    /**
-     * Show loading section
-     */
-    function showLoading() {
-        hideAllSections();
-        elements.loadingSection.style.display = 'flex';
+        elements.retryBtn?.addEventListener('click', loadDashboard);
     }
 
     /**
      * Show error section
      */
     function showError(message) {
-        hideAllSections();
+        elements.dashboardSection.style.display = 'none';
         elements.errorMessage.textContent = message;
         elements.errorSection.style.display = 'flex';
     }
 
     /**
-     * Hide all sections
+     * Show dashboard section
      */
-    function hideAllSections() {
-        elements.authSection.style.display = 'none';
-        elements.dashboardSection.style.display = 'none';
-        elements.loadingSection.style.display = 'none';
+    function showDashboard() {
         elements.errorSection.style.display = 'none';
-        elements.syncBtn.style.display = 'none';
+        elements.dashboardSection.style.display = 'block';
     }
 
     /**
-     * Handle connect button click
+     * Fetch data from API
      */
-    function handleConnect() {
-        StravaAPI.authorize();
-    }
-
-    /**
-     * Handle disconnect button click
-     */
-    function handleDisconnect() {
-        StravaAPI.disconnect();
-        showAuthSection();
-    }
-
-    /**
-     * Handle sync button click
-     */
-    async function handleSync() {
-        elements.syncBtn.disabled = true;
-        elements.syncBtn.querySelector('.sync-icon').style.animation = 'spin 1s linear infinite';
-
-        try {
-            await StravaAPI.refreshActivities();
-            await loadDashboard();
-        } catch (error) {
-            console.error('Sync failed:', error);
-        } finally {
-            elements.syncBtn.disabled = false;
-            elements.syncBtn.querySelector('.sync-icon').style.animation = '';
+    async function fetchAPI(endpoint) {
+        const response = await fetch(`${API_URL}${endpoint}`);
+        if (!response.ok) {
+            throw new Error(`API error: ${response.status}`);
         }
-    }
-
-    /**
-     * Handle retry button click
-     */
-    async function handleRetry() {
-        if (StravaAPI.isAuthenticated()) {
-            await loadDashboard();
-        } else {
-            showAuthSection();
-        }
-    }
-
-    /**
-     * Handle OAuth callback
-     */
-    async function handleOAuthCallback(code) {
-        showLoading();
-
-        try {
-            await StravaAPI.handleCallback(code);
-            await loadDashboard();
-        } catch (error) {
-            console.error('OAuth callback failed:', error);
-            showError('Failed to connect to Strava. Please try again.');
-        }
+        return response.json();
     }
 
     /**
      * Load dashboard data
      */
     async function loadDashboard() {
-        showLoading();
-
         try {
             const [athlete, activities] = await Promise.all([
-                StravaAPI.getAthlete(),
-                StravaAPI.getActivities()
+                fetchAPI('/api/athlete'),
+                fetchAPI('/api/activities')
             ]);
 
             renderAthlete(athlete);
@@ -212,7 +107,7 @@ const Dashboard = (function() {
             showDashboard();
         } catch (error) {
             console.error('Failed to load dashboard:', error);
-            showError('Failed to load your activities. Please try again.');
+            showError('Unable to load activities. Please try again later.');
         }
     }
 
@@ -255,16 +150,16 @@ const Dashboard = (function() {
         // Calculate stats
         let totalDistance = 0;
         let totalTime = 0;
-        let runCount = 0;
         let runDistance = 0;
+        let runTime = 0;
 
         weeklyActivities.forEach(activity => {
             totalDistance += activity.distance || 0;
             totalTime += activity.moving_time || 0;
 
             if (activity.type === 'Run' || activity.type === 'VirtualRun') {
-                runCount++;
                 runDistance += activity.distance || 0;
+                runTime += activity.moving_time || 0;
             }
         });
 
@@ -273,10 +168,7 @@ const Dashboard = (function() {
 
         // Calculate average pace (minutes per mile) for runs
         let avgPace = '--';
-        if (runDistance > 0 && runCount > 0) {
-            const runTime = weeklyActivities
-                .filter(a => a.type === 'Run' || a.type === 'VirtualRun')
-                .reduce((sum, a) => sum + (a.moving_time || 0), 0);
+        if (runDistance > 0) {
             const paceSecondsPerMile = runTime / (runDistance / 1609.34);
             avgPace = formatPace(paceSecondsPerMile);
         }
@@ -298,7 +190,7 @@ const Dashboard = (function() {
                     <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M12 20v-6M6 20V10M18 20V4"/>
                     </svg>
-                    <p>No activities yet. Go for a run!</p>
+                    <p>No activities yet.</p>
                 </div>
             `;
             return;
@@ -398,8 +290,5 @@ const Dashboard = (function() {
         init();
     }
 
-    // Public API
-    return {
-        refresh: loadDashboard
-    };
+    return { refresh: loadDashboard };
 })();
