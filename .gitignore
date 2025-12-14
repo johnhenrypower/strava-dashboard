@@ -1,0 +1,9 @@
+# Environment variables (secrets)
+.dev.vars
+worker/.dev.vars
+
+# OS files
+.DS_Store
+
+# Node
+node_modules/
