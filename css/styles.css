@@ -1,13 +1,11 @@
 :root {
-    --bg-primary: #0a0a0f;
-    --bg-secondary: #12121a;
-    --bg-card: rgba(255, 255, 255, 0.03);
-    --text-primary: #ffffff;
-    --text-secondary: #a0a0b0;
-    --accent-1: #6366f1;
-    --accent-2: #8b5cf6;
-    --accent-3: #ec4899;
-    --gradient: linear-gradient(135deg, var(--accent-1), var(--accent-2), var(--accent-3));
+    --bg: #fafafa;
+    --text: #111;
+    --text-secondary: #666;
+    --accent: #0d9488;
+    --accent-light: #ccfbf1;
+    --card-bg: #fff;
+    --border: #e5e5e5;
     --strava-orange: #fc4c02;
     --strava-orange-dark: #e04500;
     --success: #22c55e;
@@ -25,82 +23,36 @@ html {
 }
 
 body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    background: var(--bg-primary);
-    color: var(--text-primary);
+    font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg);
+    color: var(--text);
     line-height: 1.6;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
 }
 
-/* Animated background */
-.bg-gradient {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: -1;
-    overflow: hidden;
-}
-
-.bg-gradient::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle at 20% 80%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
-                radial-gradient(circle at 40% 40%, rgba(236, 72, 153, 0.1) 0%, transparent 50%);
-    animation: float 20s ease-in-out infinite;
-}
-
-@keyframes float {
-    0%, 100% { transform: translate(0, 0) rotate(0deg); }
-    33% { transform: translate(2%, 2%) rotate(1deg); }
-    66% { transform: translate(-1%, 1%) rotate(-1deg); }
-}
-
-/* Grid pattern overlay */
-.grid-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-image:
-        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-    background-size: 50px 50px;
-    z-index: -1;
-}
-
 /* Navigation */
 nav {
-    position: fixed;
-    top: 0;
-    width: 100%;
-    padding: 1.5rem 3rem;
+    padding: 2rem 3rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    z-index: 1000;
-    background: rgba(10, 10, 15, 0.8);
-    backdrop-filter: blur(20px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid var(--border);
 }
 
 .logo {
-    font-size: 1.25rem;
-    font-weight: 700;
-    background: var(--gradient);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    font-size: 0.875rem;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--text);
     text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.logo:hover {
+    color: var(--accent);
 }
 
 .nav-right {
@@ -111,18 +63,18 @@ nav {
 
 .nav-title {
     color: var(--text-secondary);
-    font-size: 0.9rem;
+    font-size: 0.875rem;
     font-weight: 500;
 }
 
 /* Buttons */
 .btn {
-    padding: 0.875rem 2rem;
-    border-radius: 100px;
-    font-size: 0.95rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
     font-weight: 600;
     text-decoration: none;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
     cursor: pointer;
     border: none;
     display: inline-flex;
@@ -132,29 +84,27 @@ nav {
 
 .btn-small {
     padding: 0.5rem 1rem;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
 }
 
 .btn-primary {
-    background: var(--gradient);
+    background: var(--accent);
     color: white;
-    box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
 }
 
 .btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 30px rgba(99, 102, 241, 0.5);
+    background: #0f766e;
+    transform: translateY(-1px);
 }
 
 .btn-secondary {
-    background: var(--bg-card);
-    color: var(--text-primary);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--card-bg);
+    color: var(--text);
+    border: 1px solid var(--border);
 }
 
 .btn-secondary:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(255, 255, 255, 0.2);
+    border-color: var(--text-secondary);
 }
 
 .btn-ghost {
@@ -164,24 +114,22 @@ nav {
 }
 
 .btn-ghost:hover {
-    color: var(--text-primary);
+    color: var(--text);
 }
 
 .btn-strava {
     background: var(--strava-orange);
     color: white;
-    box-shadow: 0 4px 20px rgba(252, 76, 2, 0.4);
 }
 
 .btn-strava:hover {
     background: var(--strava-orange-dark);
-    transform: translateY(-2px);
-    box-shadow: 0 6px 30px rgba(252, 76, 2, 0.5);
+    transform: translateY(-1px);
 }
 
 .btn-strava svg {
-    width: 20px;
-    height: 20px;
+    width: 18px;
+    height: 18px;
 }
 
 .sync-icon {
@@ -195,7 +143,7 @@ nav {
 /* Main content */
 main {
     flex: 1;
-    padding: 8rem 3rem 4rem;
+    padding: 3rem;
     max-width: 900px;
     margin: 0 auto;
     width: 100%;
@@ -227,8 +175,9 @@ main {
 }
 
 .auth-content h1 {
+    font-family: 'Instrument Serif', Georgia, serif;
     font-size: 2rem;
-    font-weight: 700;
+    font-weight: 400;
     margin-bottom: 1rem;
 }
 
@@ -254,9 +203,9 @@ main {
     gap: 1rem;
     margin-bottom: 3rem;
     padding: 1.5rem;
-    background: var(--bg-card);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 16px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 1rem;
 }
 
 .athlete-avatar {
@@ -264,7 +213,7 @@ main {
     height: 60px;
     border-radius: 50%;
     object-fit: cover;
-    background: var(--gradient);
+    background: var(--accent-light);
 }
 
 .athlete-info {
@@ -272,13 +221,14 @@ main {
 }
 
 .athlete-info h2 {
-    font-size: 1.25rem;
-    font-weight: 600;
+    font-family: 'Instrument Serif', Georgia, serif;
+    font-size: 1.5rem;
+    font-weight: 400;
 }
 
 .athlete-location {
     color: var(--text-secondary);
-    font-size: 0.9rem;
+    font-size: 0.875rem;
 }
 
 /* Section Headers */
@@ -290,13 +240,14 @@ main {
 }
 
 .section-header h3 {
-    font-size: 1.25rem;
-    font-weight: 600;
+    font-family: 'Instrument Serif', Georgia, serif;
+    font-size: 1.5rem;
+    font-weight: 400;
 }
 
 .week-range {
     color: var(--text-secondary);
-    font-size: 0.85rem;
+    font-size: 0.8rem;
 }
 
 /* Stats Grid */
@@ -308,31 +259,28 @@ main {
 }
 
 .stat-card {
-    background: var(--bg-card);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 16px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 1rem;
     padding: 1.5rem;
     text-align: center;
-    transition: all 0.3s ease;
+    transition: all 0.2s ease;
 }
 
 .stat-card:hover {
-    border-color: rgba(99, 102, 241, 0.3);
-    transform: translateY(-3px);
+    border-color: var(--accent);
+    transform: translateY(-2px);
 }
 
 .stat-value {
-    font-size: 1.75rem;
-    font-weight: 800;
-    background: var(--gradient);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--accent);
     margin-bottom: 0.25rem;
 }
 
 .stat-label {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -350,25 +298,25 @@ main {
     align-items: center;
     gap: 1rem;
     padding: 1.25rem 1.5rem;
-    background: var(--bg-card);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 12px;
-    transition: all 0.3s ease;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    transition: all 0.2s ease;
     cursor: pointer;
     text-decoration: none;
     color: inherit;
 }
 
 .activity-card:hover {
-    border-color: rgba(99, 102, 241, 0.3);
-    transform: translateX(5px);
+    border-color: var(--accent);
+    transform: translateX(4px);
 }
 
 .activity-icon {
     width: 40px;
     height: 40px;
-    background: var(--gradient);
-    border-radius: 10px;
+    background: var(--accent-light);
+    border-radius: 0.75rem;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -437,8 +385,8 @@ main {
 .spinner {
     width: 24px;
     height: 24px;
-    border: 3px solid rgba(255, 255, 255, 0.1);
-    border-top-color: var(--accent-1);
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
     border-radius: 50%;
     animation: spin 1s linear infinite;
 }
@@ -464,6 +412,8 @@ main {
 }
 
 .error-content h2 {
+    font-family: 'Instrument Serif', Georgia, serif;
+    font-weight: 400;
     margin-bottom: 0.5rem;
 }
 
@@ -476,8 +426,9 @@ main {
 footer {
     text-align: center;
     padding: 2rem;
+    border-top: 1px solid var(--border);
     color: var(--text-secondary);
-    font-size: 0.85rem;
+    font-size: 0.875rem;
 }
 
 footer a {
@@ -510,7 +461,7 @@ footer a:hover {
     }
 
     main {
-        padding: 6rem 1.5rem 3rem;
+        padding: 2rem 1.5rem;
     }
 
     .stats-grid {
